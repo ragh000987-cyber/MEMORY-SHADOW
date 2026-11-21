@@ -1,12 +1,21 @@
 #include <stdio.h>
 
 #define MAX 10
+#define MAX_PAGES 100
+
+struct PageTable {
+    int pageNumber;
+    int frameNumber;
+    int valid;
+};
 
 struct Process {
-  int pid;
+    int pid;
     char name[30];
- int memory;
- int allocated;
+    int memory;
+    int allocated;
+    int pages;
+    struct PageTable pageTable[MAX_PAGES];
 };
 
 int main()
