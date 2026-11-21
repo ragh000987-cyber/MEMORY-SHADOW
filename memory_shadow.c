@@ -20,7 +20,7 @@ struct Process {
 
 int main()
 { struct Process p[MAX];
- int totalMemory, availableMemory;
+ int totalMemory, availableMemory,pagesize,totalframes;
     int n, i;
     printf("===== MEMORY SHADOW =====\n");
    printf("Enter total physical memory (KB): ");
@@ -31,7 +31,18 @@ if (totalMemory <= 0) {
         return 0;
     }
 
-    availableMemory = totalMemory;
+  printf("Enter page size (KB): ");
+scanf("%d", &pageSize);
+
+if (pageSize <= 0 || pageSize > totalMemory) {
+    printf("Invalid page size\n");
+    return 0;
+}
+
+totalFrames = totalMemory / pageSize;
+
+printf("Total Frames: %d\n", totalFrames);
+ availableMemory = totalMemory;
 
     printf("Enter number of processes: ");
     scanf("%d", &n);
