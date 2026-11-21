@@ -14,7 +14,6 @@ struct process {
     int pid;
     char name[30];
     int memory;
-    int allocated;
     int pages;
     struct page pt[max_pages];
 };
@@ -29,9 +28,11 @@ int main() {
     struct process p[max];
     struct frame f[max_frames];
 
-    int totalmemory,availablememory;
-    int pagesize,totalframes;
+    int totalmemory,pagesize,totalframes;
     int n,i,j;
+    int pid,pagenumber,processindex;
+    int freeframe,usedframes;
+    int requests;
 
     printf("===== memory shadow =====\n");
 
@@ -66,8 +67,6 @@ int main() {
         f[i].occupied = 0;
     }
 
-    availablememory = totalmemory;
-
     printf("enter number of processes: ");
     scanf("%d",&n);
 
@@ -79,7 +78,6 @@ int main() {
     for(i = 0; i < n; i++) {
 
         p[i].pid = i + 1;
-        p[i].allocated = 0;
 
         printf("\nenter process %d name: ",i + 1);
         scanf("%29s",p[i].name);
@@ -110,38 +108,101 @@ int main() {
             p[i].pt[j].framenumber = -1;
             p[i].pt[j].valid = 0;
         }
-
-        if(p[i].memory <= availablememory) {
-            p[i].allocated = 1;
-            availablememory -= p[i].memory;
-
-            printf("memory allocated successfully\n");
-        }
-        else {
-            printf("memory allocation failed\n");
-        }
     }
 
     printf("\n===== process details =====\n");
+    printf("pid\tname\tmemory\tpages\n");
 
-    printf("pid\tname\tmemory\tpages\tstatus\n");
+    for(i = 0; i < n; i++) {
+        printf("%d\t%s\t%d kb\t%d\n",
+        p[i].pid,p[i].name,p[i].memory,p[i].pages);
+    }
+
+    printf("\nenter number of page requests: ");
+    scanf("%d",&requests);
+
+    if(requests < 0) {
+        printf("invalid number of requests\n");
+        return 0;
+    }
+
+    for(i = 0; i < requests; i++) {
+
+        printf("\n===== page request %d =====\n",i + 1);
+
+        printf("enter process id: ");
+        scanf("%d",&pid);
+
+        if(pid < 1 || pid > n) {
+            printf("invalid process id\n");
+            continue;
+        }
+
+        processindex = pid - 1;
+
+        printf("enter page number: ");
+        scanf("%d",&pagenumber);
+
+        if(pagenumber < 0 || pagenumber >= p[processindex].pages) {
+            printf("invalid page number\n");
+            continue;
+        }
+
+        if(p[processindex].pt[pagenumber].valid == 1) {
+            printf("page hit\n");
+            printf("page already present in frame %d\n",
+            p[processindex].pt[pagenumber].framenumber);
+        }
+        else {
+
+            printf("page fault\n");
+
+            freeframe = -1;
+
+            for(j = 0; j < totalframes; j++) {
+                if(f[j].occupied == 0) {
+                    freeframe = j;
+                    break;
+                }
+            }
+
+            if(freeframe == -1) {
+                printf("no free frames available\n");
+                printf("page replacement required\n");
+            }
+            else {
+
+                f[freeframe].pid = pid;
+                f[freeframe].pagenumber = pagenumber;
+                f[freeframe].occupied = 1;
+
+                p[processindex].pt[pagenumber].framenumber = freeframe;
+                p[processindex].pt[pagenumber].valid = 1;
+
+                printf("page %d loaded into frame %d\n",pagenumber,freeframe);
+            }
+        }
+    }
+
+    printf("\n===== page tables =====\n");
 
     for(i = 0; i < n; i++) {
 
-        printf("%d\t%s\t%d kb\t%d\t",
-        p[i].pid,p[i].name,p[i].memory,p[i].pages);
+        printf("\nprocess %d (%s)\n",p[i].pid,p[i].name);
+        printf("page\tframe\tvalid\n");
 
-        if(p[i].allocated == 1) {
-            printf("allocated\n");
-        }
-        else {
-            printf("failed\n");
+        for(j = 0; j < p[i].pages; j++) {
+            printf("%d\t%d\t%d\n",
+            p[i].pt[j].pagenumber,
+            p[i].pt[j].framenumber,
+            p[i].pt[j].valid);
         }
     }
 
     printf("\n===== frame table =====\n");
-
     printf("frame\tpid\tpage\tstatus\n");
+
+    usedframes = 0;
 
     for(i = 0; i < totalframes; i++) {
 
@@ -152,14 +213,18 @@ int main() {
         }
         else {
             printf("occupied\n");
+            usedframes++;
         }
     }
 
-    printf("\ntotal memory: %d kb\n",totalmemory);
-    printf("total frames: %d\n",totalframes);
+    printf("\n===== memory summary =====\n");
+    printf("total memory: %d kb\n",totalmemory);
     printf("page size: %d kb\n",pagesize);
-    printf("used memory: %d kb\n",totalmemory - availablememory);
-    printf("available memory: %d kb\n",availablememory);
+    printf("total frames: %d\n",totalframes);
+    printf("used frames: %d\n",usedframes);
+    printf("free frames: %d\n",totalframes - usedframes);
+    printf("used memory: %d kb\n",usedframes * pagesize);
+    printf("available memory: %d kb\n",(totalframes - usedframes) * pagesize);
 
     return 0;
 }
