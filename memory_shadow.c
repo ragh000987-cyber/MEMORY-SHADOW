@@ -4,7 +4,7 @@
 #define max_pages 100
 #define max_frames 100
 
-struct pagetable {
+struct page {
     int pagenumber;
     int framenumber;
     int valid;
@@ -16,7 +16,7 @@ struct process {
     int memory;
     int allocated;
     int pages;
-    struct pagetable pt[max_pages];
+    struct page pt[max_pages];
 };
 
 struct frame {
