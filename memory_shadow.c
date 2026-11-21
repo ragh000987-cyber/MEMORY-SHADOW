@@ -13,7 +13,7 @@ int main()
 { struct Process p[MAX];
  int totalMemory, availableMemory;
     int n, i;
-    printf("===== MEMORY SHADOW =====\n")
+    printf("===== MEMORY SHADOW =====\n");
    printf("Enter total physical memory (KB): ");
   scanf("%d", &totalMemory);
 
